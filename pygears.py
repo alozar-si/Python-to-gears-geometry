@@ -40,7 +40,7 @@ class pygears():
         
         return
     
-    def G4VPhysicalVolume(self,
+    def G4PVPlacement(self,
                         rotation_matrix_name=None,
                         translation_position=[0,0,0],
                         logical_volu_name=None,
@@ -52,7 +52,7 @@ class pygears():
         fun_arguments = {"rotation_matrix_name":rotation_matrix_name,"logical_volu_name":logical_volu_name, "parent_volu_name":parent_volu_name, "copy_number":copy_number}
         for arg, val in fun_arguments.items():
             if val is None:
-                logging.error(f"G4VPhysicalVolume: {arg} is not defined.")
+                logging.error(f"G4PVPlacement: {arg} is not defined.")
                 return
         
         if physical_volu_name is None:
@@ -74,8 +74,7 @@ class pygears():
         self._geometry_txt += "\n" + txt_G4VPhysicalVolume
         
         return
-    
-    
+        
     def vis_logicalVolume(self, logical_volu_name=None, flag=0):
         # Set the visualization ON or OFF
         if logical_volu_name is None:
@@ -106,7 +105,20 @@ class pygears():
         txt_rot = f"\n:rotm {rot_name} {rx} {ry} {rz}"
         self._defined_rotations.append([rot_name, rx, ry, rz])
         self._geometry_txt += txt_rot
+    
+    def G4Material(self, material_name=None, atomic_number=None, molecular_mass=None, density=None):
+        #Material made of one element
+        fun_arguments = {"material_name":material_name, "atomic_number":atomic_number, "molecular_mass":molecular_mass, "density":density}
+        for arg, val in fun_arguments.items():
+            if val is None:
+                logging.error(f"G4Material: {arg} is not defined.")
+                return
         
+        txt_material = f":MATE {material_name} {atomic_number} {molecular_mass} {density}"
+        self._geometry_txt += "\n" + txt_material  
+                
+        return
+    
     def create_geometry_file(self):
         print(self._geometry_txt)
         return
