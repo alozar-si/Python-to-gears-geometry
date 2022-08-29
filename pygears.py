@@ -26,6 +26,20 @@ class pygears():
         
         self._geometry_txt += "\n" + txt_G4Box
     
+    def bool_createSolid(self, solid_name=None, bool_operation=None, solid_1=None, solid_2=None, rotation=None, translation=[0,0,0]):
+        #:solid crate SUBTRACTION cube cuboid r000 0 0 0
+        fun_arguments = {"solid_name":solid_name, "bool_operation":bool_operation, "solid_1":solid_1, "solid_2":solid_2, "rotation":rotation}
+        for arg, val in fun_arguments.items():
+            if val is None:
+                logging.error(f"bool_createSolid: {arg} is not defined.")
+                return
+        
+        txt_boolSolid = f"\n:SOLID {solid_name} {bool_operation} {solid_1} {solid_2} {rotation} {translation[0]} {translation[1]} {translation[2]}"
+        
+        self._geometry_txt += txt_boolSolid
+        
+        return
+    
     def G4LogicalVolume(self, solid_name=None, material_name=None, volu_name=None):
         fun_arguments = {"solid_name":solid_name, "material_name":material_name, "volu_name":volu_name}
         for arg, val in fun_arguments.items():
@@ -91,10 +105,17 @@ class pygears():
             logging.warning(f"vis_logicalVolume: {logical_volu_name} does not exist.")
             return
         
-        txt_vis = f"\n:vis {logical_volu_name} "
+        txt_vis = f"\n:VIS {logical_volu_name} "
         txt_vis += "ON" if flag else "OFF"    
         
         self._geometry_txt += txt_vis
+    
+    def set_color_logicVolume(self, logical_volu_name=None, rgb=[1,1,1]):
+        if logical_volu_name is None:
+            logging.error("set_color_logicVolume: logical_volu_name is not defined.")
+            return
+        
+        self._geometry_txt += f"\n:COLOR {logical_volu_name} {rgb[0]} {rgb[1]} {rgb[2]}"
     
     def CreateRotation(self, rot_name=None, rx=0, ry=0, rz=0):
         
@@ -119,6 +140,34 @@ class pygears():
                 
         return
     
+    def G4_MIXT_BY_VOLUME(self, material_name=None, density=None, n_components=None, *argv):
+        fun_arguments = {"material_name":material_name, "density":density, "n_components":n_components}
+        for arg, val in fun_arguments.items():
+            if val is None:
+                logging.error(f"G4_MIXT_BY_VOLUME: {arg} is not defined.")
+                return
+            
+        #parse components
+        if len(argv) != n_components*2:
+            logging.error("G4_MIXT_BY_VOLUME: number of components is incorrect.")
+            return
+        
+        components = {}
+        
+        i = 0
+        while i <= len(argv)//2:
+            components[argv[i]] = argv[i+1]
+            i += 2
+        
+        #MIXT_BY_VOLUME M_aerogel 0.1 4 G4_O 0.48 G4_H 0.01 G4_Si 0.45 G4_C 0.06
+        txt_mixt_by_vol = f"\n:MIXT_BY_VOLUME {material_name} {density} {n_components}"
+        for key, val in components.items():
+            txt_mixt_by_vol += f" {key} {val}"
+            
+        self._geometry_txt += txt_mixt_by_vol
+                        
+        return
+    
     def create_geometry_file(self):
         print(self._geometry_txt)
         return
@@ -128,19 +177,35 @@ class pygears():
 
 myproject = pygears()
 
-myproject.G4Box("world", 10, 10, 10)
+myproject.G4Box("world", 2000, 2000, 2000)
 myproject.G4LogicalVolume("world", "Air", "world")
 myproject.vis_logicalVolume("world", 0)
 
 myproject.new_line()
-
 myproject.CreateRotation("ry90", 0, 90, 0)
 myproject.CreateRotation("r000", 0, 0, 0)
+myproject.CreateRotation("ry45", 0, 45, 0)
+myproject.CreateRotation("ry180", 0, 180, 0)
+myproject.CreateRotation("rz90", 0, 0, 90)
 
 myproject.new_line()
+myproject.G4_MIXT_BY_VOLUME("M_aerogel", 0.1, 4, "G4_O", 0.48, "G4_H", 0.01, "G4_Si", 0.45, "G4_C", 0.06)
+myproject.G4Box("aerogel", 60, 60, 10)
+myproject.G4LogicalVolume("aerogel", "M_aerogel", "aerogel")
+myproject.set_color_logicVolume("aerogel", [1,0,0])
 
-myproject.G4Box("mybox", 1, 1, 1)
-myproject.G4LogicalVolume("mybox", "Air", "mybox")
-myproject.G4VPhysicalVolume("r000", logical_volu_name="mybox", parent_volu_name="world", copy_number=0)
+myproject.new_line()
+myproject.G4Box("cube", 500, 280, 280)
+myproject.G4Box("cuboid", 498, 278, 278)
+myproject.bool_createSolid("crate", bool_operation="SUBSTRACTION", solid_1="cube", solid_2="cuboid", rotation="r000", translation=[0,0,0])
+myproject.G4LogicalVolume("crate", "G4_Al", "crate")
+myproject.set_color_logicVolume("crate", rgb=[0.4, 0.4, 0.4])
+myproject.G4PVPlacement("r000", [0,0,0], "crate", "crate", "world", copy_number=1)
+myproject.vis_logicalVolume("crate", flag=0)
+
+
+
+
+
 
 myproject.create_geometry_file()
