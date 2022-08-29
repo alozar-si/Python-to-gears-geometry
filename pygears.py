@@ -1,3 +1,5 @@
+from cmath import log
+from copy import copy
 import logging
 
 class pygears():
@@ -60,7 +62,6 @@ class pygears():
                         logical_volu_name=None,
                         physical_volu_name=None,
                         parent_volu_name=None,
-                        bool_operator=None,
                         copy_number=None):
         
         fun_arguments = {"rotation_matrix_name":rotation_matrix_name,"logical_volu_name":logical_volu_name, "parent_volu_name":parent_volu_name, "copy_number":copy_number}
@@ -82,8 +83,8 @@ class pygears():
             logging.error(f"G4VPhysicalVolume: rotation matrix {rotation_matrix_name} must be defined before using it.")
             return
         
-        txt_G4VPhysicalVolume = f":PLACE {logical_volu_name} {copy_number} {parent_volu_name} {rotation_matrix_name} {translation_position[0]} {translation_position[1]} {translation_position[2]}"
-        self._existing_physical_volu.append([logical_volu_name, copy_number, parent_volu_name, rotation_matrix_name, translation_position])
+        txt_G4VPhysicalVolume = f":PLACE {physical_volu_name} {copy_number} {parent_volu_name} {rotation_matrix_name} {translation_position[0]} {translation_position[1]} {translation_position[2]}"
+        self._existing_physical_volu.append([physical_volu_name, copy_number, parent_volu_name, rotation_matrix_name, translation_position])
         
         self._geometry_txt += "\n" + txt_G4VPhysicalVolume
         
@@ -203,7 +204,18 @@ myproject.set_color_logicVolume("crate", rgb=[0.4, 0.4, 0.4])
 myproject.G4PVPlacement("r000", [0,0,0], "crate", "crate", "world", copy_number=1)
 myproject.vis_logicalVolume("crate", flag=0)
 
+myproject.new_line()
+#:volu crate_air cuboid G4_AIR
+#:PLACE crate_air 2 world r000 0 0 0
+#:vis crate_air OFF
+myproject.G4LogicalVolume("cuboid", "G4_AIR", volu_name="crate_air")
+myproject.G4PVPlacement("r000", [0,0,0], logical_volu_name="crate_air", parent_volu_name="world", copy_number=2)
+myproject.vis_logicalVolume("crate_air", 0)
 
+
+myproject.new_line()
+#:PLACE aerogel 0 crate_air r000 0 0 -100
+myproject.G4PVPlacement("r000", [0, 0, -100], logical_volu_name="aerogel", parent_volu_name="crate_air", copy_number=2)
 
 
 
