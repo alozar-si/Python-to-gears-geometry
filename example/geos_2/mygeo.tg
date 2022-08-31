@@ -1,0 +1,29 @@
+//This is geometry for project_1
+:SOLID world BOX 2*m 2*m 2*m
+:VOLU world world G4_Galactic
+:VIS world OFF
+
+:rotm ry90 0 90 0
+:rotm r000 0 0 0
+:rotm ry45 0 45 0
+:rotm ry180 0 180 0
+:rotm rz90 0 0 90
+
+:MIXT_BY_VOLUME M_aerogel 0.1 4 G4_O 0.48 G4_H 0.01 G4_Si 0.45 G4_C 0.06
+:SOLID aerogel BOX 60*mm 60*mm 10*mm
+:VOLU aerogel aerogel M_aerogel
+:COLOR aerogel 1 0 0
+
+:SOLID cube BOX 500*mm 280*mm 280*mm
+:SOLID cuboid BOX 498*mm 278*mm 278*mm
+:SOLID crate SUBTRACTION cube cuboid r000 0 0 0
+:VOLU crate crate G4_Al
+:COLOR crate 0.4 0.4 0.4
+:PLACE crate 1 world r000 0 0 0
+:VIS crate OFF
+
+:VOLU crate_air cuboid G4_AIR
+:PLACE crate_air 2 world r000 0 0 0
+:VIS crate_air OFF
+
+:PLACE aerogel 2 crate_air r000 0 0 -100

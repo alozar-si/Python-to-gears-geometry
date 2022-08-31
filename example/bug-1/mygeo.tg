@@ -1,0 +1,33 @@
+// default unit of length is mm
+:volu world BOX 2*m 2*m 2*m G4_Galactic
+:vis world OFF
+
+//rotational matrix <name> <rotation around x,y,z>
+:rotm ry90 0 90  0
+:rotm ry45 0 45  0
+:rotm ry180 0 180  0
+:rotm rz90 0  0 90
+:rotm r000 0  0  0
+
+// Place AEROGEL in the crate_air
+:MIXT_BY_VOLUME M_aerogel 0.1 4 G4_O 0.48 G4_H 0.01 G4_Si 0.45 G4_C 0.06
+:VOLU aerogel BOX 60 60 10 M_aerogel
+:color aerogel 1 0. 0.
+
+// Aluminium CRATE
+:solid cube BOX 500*mm 280*mm 280*mm
+//cuboid for making a crate
+:solid cuboid BOX 498 278 278
+// boolean operations
+:solid crate SUBTRACTION cube cuboid r000 0 0 0
+:volu crate crate G4_Al
+:color crate 0.4 0.4 0.4
+:place crate 1 world r000 0 0 0
+:vis crate OFF
+
+:volu crate_air cuboid G4_AIR
+:PLACE crate_air 2 world r000 0 0 0
+:vis crate_air OFF
+
+// Try to remove last empty line and it wont display the aerogel
+:PLACE aerogel 0 crate_air r000 0 0 -100
