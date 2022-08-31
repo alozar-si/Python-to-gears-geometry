@@ -176,7 +176,34 @@ class pygears():
                 
         return
     
-    #:MIXT_BY_NATOMS CO2 1.8182E-3 2 C 1 O 2
+    def MIXT_BY_NATOMS(self, material_name=None, density=None, n_components=None, *argv):
+        fun_arguments = {"material_name":material_name, "density":density, "n_components":n_components}
+        for arg, val in fun_arguments.items():
+            if val is None:
+                logging.error(f"MIXT_BY_NATOMS: {arg} is not defined.")
+                return
+            
+        #parse components
+        if len(argv) != n_components*2:
+            logging.error("MIXT_BY_NATOMS: number of components is incorrect.")
+            return
+        
+        components = {}
+        
+        i = 0
+        while i < len(argv):
+            components[argv[i]] = argv[i+1]
+            i += 2
+        
+        #:MIXT_BY_NATOMS CO2 1.8182E-3 2 C 1 O 2
+        txt_mixt_by_natoms = f"\n:MIXT_BY_NATOMS {material_name} {density} {n_components}"
+        for key, val in components.items():
+            txt_mixt_by_natoms += f" {key} {val}"
+            
+        self._geometry_txt += txt_mixt_by_natoms
+                        
+        return
+    
     
     def G4_MIXT_BY_VOLUME(self, material_name=None, density=None, n_components=None, *argv):
         fun_arguments = {"material_name":material_name, "density":density, "n_components":n_components}
@@ -217,12 +244,17 @@ class pygears():
         output_txt = self.get_geometry_txt()
         
         print(output_txt)
+        
         output_file = self._folder_name + self._file_name
         with open(output_file, "w") as f:
             f.write(output_txt)
         logging.info(f"write_geometry_to_file: geometry saved in {output_file}.")
         
         for subproject in self._list_sub_projects:
+            print(f"**** START: {subproject._sub_project_name} ****")
+            print(subproject.get_geometry_txt())
+            print(f"**** END: {subproject._sub_project_name} ****\n")
+            
             output_file = self._folder_name + subproject._sub_project_name + ".tg"
             with open(output_file, "w") as f:
                 f.write(subproject.get_geometry_txt())
@@ -282,7 +314,7 @@ class pygears():
         if bypass_include is None:
             self._geometry_txt += f"\n#include {self._folder_name + subproject._sub_project_name}.tg"
         else:
-            self._geometry_txt += bypass_include
+            self._geometry_txt += "\n"+bypass_include
         
     def new_line(self):
         self._geometry_txt += "\n"
@@ -359,13 +391,19 @@ myproject.G4PVPlacement("ry90", [259.5, 0, 0], "pmt", parent_volu_name="crate_ai
 mwpc_file = pygears(sub_project=1, sub_project_name="mwpc")
 mwpc_file.set_main_project(myproject)
 """
+:MIXT_BY_NATOMS CO2 1.8182E-3 2 C 1 O 2
+:MIXT_BY_VOLUME GasMWPC (41.17/22.4/1000) 2 G4_Ar 0.7 CO2 0.3 
+
 :VOLU mwpc(S) BOX 25 25 2.5 GasMWPC
 :color mwpc(S) 0. 1. 0.
 :PLACE mwpc(S) 6 world r000 0 0 280+5
 :PLACE mwpc(S) 7 world ry180 0 0 -280-5
 """
+
+mwpc_file.MIXT_BY_NATOMS("CO2", 1.8182E-3, 2, "C", 1, "O", 2)
+mwpc_file.G4_MIXT_BY_VOLUME("GasMWPC", (41.17/22.4/1000), 2, "G4_Ar", 0.7, "CO2", 0.3)
 mwpc_file.G4Box("mwpc", 25, 25, 2.5)
-mwpc_file.G4LogicalVolume("mwpc", "G4_AIR", "mwpc")
+mwpc_file.G4LogicalVolume("mwpc", "GasMWPC", "mwpc")
 mwpc_file.set_color_logicVolume("mwpc", [0, 1, 0])
 mwpc_file.G4PVPlacement("r000", [0, 0, 280+5], "mwpc", parent_volu_name="world", copy_number=6)
 mwpc_file.G4PVPlacement("ry180", [0, 0, -280-5], "mwpc", parent_volu_name="world", copy_number=7)

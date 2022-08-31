@@ -1,4 +1,4 @@
-//This is geometry for project_1
+
 :SOLID world BOX 2*m 2*m 2*m
 :VOLU world world G4_Galactic
 :VIS world OFF
@@ -16,14 +16,27 @@
 
 :SOLID cube BOX 500*mm 280*mm 280*mm
 :SOLID cuboid BOX 498*mm 278*mm 278*mm
-:SOLID crate SUBTRACTION cube cuboid r000 0 0 0
+:SOLID crate SUBTRACTION cube cuboid r000 0*mm 0*mm 0*mm
 :VOLU crate crate G4_Al
 :COLOR crate 0.4 0.4 0.4
-:PLACE crate 1 world r000 0 0 0
+:PLACE crate 1 world r000 0*mm 0*mm 0*mm
 :VIS crate OFF
 
 :VOLU crate_air cuboid G4_AIR
-:PLACE crate_air 2 world r000 0 0 0
+:PLACE crate_air 2 world r000 0*mm 0*mm 0*mm
 :VIS crate_air OFF
 
-:PLACE aerogel 2 crate_air r000 0 0 -100
+:PLACE aerogel 0 crate_air r000 0*mm 0*mm -100*mm
+
+:SOLID mirror BOX 50*mm 50*mm 1*mm
+:VOLU mirror mirror G4_Al
+:COLOR mirror 0 0.5 0.5
+:rotm rotm 0 45 0
+:PLACE mirror 4 crate_air rotm 0*mm 0*mm 0*mm
+
+:SOLID pmt BOX 70*mm 70*mm 0.5*mm
+:VOLU pmt pmt G4_SILICON_DIOXIDE
+:COLOR pmt 0.9 0.9 0
+:PLACE pmt 5 crate_air ry90 259.5*mm 0*mm 0*mm
+
+#include geos_2/mwpc.tg

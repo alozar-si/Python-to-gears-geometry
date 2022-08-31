@@ -1,0 +1,8 @@
+//This is geometry for project_1, subproject: mwpc
+:MIXT_BY_NATOMS CO2 0.0018182 2 C 1 O 2
+:MIXT_BY_VOLUME GasMWPC 0.0018379464285714288 2 G4_Ar 0.7 CO2 0.3
+:SOLID mwpc BOX 25*mm 25*mm 2.5*mm
+:VOLU mwpc mwpc GasMWPC
+:COLOR mwpc 0 1 0
+:PLACE mwpc 6 world r000 0*mm 0*mm 285*mm
+:PLACE mwpc 7 world ry180 0*mm 0*mm -285*mm
