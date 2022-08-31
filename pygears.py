@@ -1,6 +1,6 @@
-from cmath import log
-from copy import copy
 import logging
+from os.path import isdir
+from os import mkdir
 
 class pygears():
     def __init__(self, project_name="project_1") -> None:
@@ -10,10 +10,11 @@ class pygears():
         self._existing_volu = []
         self._existing_physical_volu = []
         self._defined_rotations = []
-        self._geometry_txt = f"#This is geometry for {project_name}"
+        self._geometry_txt = f"//This is geometry for {project_name}"
+        self._available_bool_operations = ["SUBTRACTION"]
         pass
     
-    def G4Box(self, name=None, hx=None, hy=None, hz=None):
+    def G4Box(self, name=None, hx=None, hy=None, hz=None, unit="mm"):
         # SOLID
         solid_type = "BOX"
         fun_arguments = {"name":name, "hx":hx, "hy":hy, "hz":hz}
@@ -23,8 +24,8 @@ class pygears():
                 return
             
         #Create G4Box
-        txt_G4Box = f":SOLID {name} {solid_type} {hx} {hy} {hz}"
-        self._existing_solids.append([name, solid_type, hx, hy, hz])
+        txt_G4Box = f":SOLID {name} {solid_type} {hx}*{unit} {hy}*{unit} {hz}*{unit}"
+        self._existing_solids.append([name, solid_type, hx, hy, hz, unit])
         
         self._geometry_txt += "\n" + txt_G4Box
     
@@ -35,6 +36,10 @@ class pygears():
             if val is None:
                 logging.error(f"bool_createSolid: {arg} is not defined.")
                 return
+        
+        if not (bool_operation.upper() in self._available_bool_operations):
+            logging.error(f"bool_createSolid: {bool_operation} is not available, check _available_bool_operations.")
+            return 
         
         txt_boolSolid = f"\n:SOLID {solid_name} {bool_operation} {solid_1} {solid_2} {rotation} {translation[0]} {translation[1]} {translation[2]}"
         
@@ -156,7 +161,7 @@ class pygears():
         components = {}
         
         i = 0
-        while i <= len(argv)//2:
+        while i < len(argv):
             components[argv[i]] = argv[i+1]
             i += 2
         
@@ -169,17 +174,49 @@ class pygears():
                         
         return
     
-    def create_geometry_file(self):
+    def write_geometry_to_file(self):
+        """Writes generated geometry to geometry file
+        """
+        self._geometry_txt += "\n"
         print(self._geometry_txt)
+        output_file = self._folder_name + self._file_name
+        with open(output_file, "w") as f:
+            f.write(self._geometry_txt)
+        logging.info(f"write_geometry_to_file: geometry saved in {output_file}.")
         return
     
+    def set_geomtry_file(self, file_name=None, folder_name=""):
+        """Function sets output file where geometry is saved
+
+        Args:
+            file_name (str, optional): Name of output file. Defaults to None.
+            folder_name (str, optional): Folder where geometry file is saved. Defaults to "".
+        """
+        if file_name is None:
+            logging.error("set_geomtry_file: file_name not defined.")
+            return
+        
+        self._file_name = file_name
+        self._folder_name = folder_name
+        
+        if self._file_name[-2:] != "tg":
+            self._file_name += ".tg"
+        
+        if self._folder_name[-1] != "/":
+            self._folder_name += "/"
+            
+        if not isdir(self._folder_name):
+            mkdir(self._folder_name)
+            logging.info(f"set_geomtry_file: folder {self._folder_name} created")
+                
+        
     def new_line(self):
         self._geometry_txt += "\n"
 
 myproject = pygears()
 
-myproject.G4Box("world", 2000, 2000, 2000)
-myproject.G4LogicalVolume("world", "Air", "world")
+myproject.G4Box("world", 2, 2, 2, "m")
+myproject.G4LogicalVolume("world", "G4_Galactic", "world")
 myproject.vis_logicalVolume("world", 0)
 
 myproject.new_line()
@@ -198,7 +235,7 @@ myproject.set_color_logicVolume("aerogel", [1,0,0])
 myproject.new_line()
 myproject.G4Box("cube", 500, 280, 280)
 myproject.G4Box("cuboid", 498, 278, 278)
-myproject.bool_createSolid("crate", bool_operation="SUBSTRACTION", solid_1="cube", solid_2="cuboid", rotation="r000", translation=[0,0,0])
+myproject.bool_createSolid("crate", bool_operation="SUBTRACTION", solid_1="cube", solid_2="cuboid", rotation="r000", translation=[0,0,0])
 myproject.G4LogicalVolume("crate", "G4_Al", "crate")
 myproject.set_color_logicVolume("crate", rgb=[0.4, 0.4, 0.4])
 myproject.G4PVPlacement("r000", [0,0,0], "crate", "crate", "world", copy_number=1)
@@ -217,7 +254,5 @@ myproject.new_line()
 #:PLACE aerogel 0 crate_air r000 0 0 -100
 myproject.G4PVPlacement("r000", [0, 0, -100], logical_volu_name="aerogel", parent_volu_name="crate_air", copy_number=2)
 
-
-
-
-myproject.create_geometry_file()
+myproject.set_geomtry_file(file_name="mygeo", folder_name="example/geos_2")
+myproject.write_geometry_to_file()
